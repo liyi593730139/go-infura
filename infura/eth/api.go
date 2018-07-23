@@ -1,4 +1,4 @@
-package infura
+package eth
 
 import "net/http"
 
@@ -23,7 +23,7 @@ func (c *Client) GetAccountBalance(address string, blockParameter BlockParameter
 	}
 
 	var resp = new(Response)
-	_, err = c.do(req, resp)
+	_, err = c.Call(req, resp)
 
 	return resp.Result, err
 }
@@ -35,7 +35,7 @@ func (c *Client) GetBlockNumber() (string, error) {
 	}
 
 	var resp = new(Response)
-	_, err = c.do(req, resp)
+	_, err = c.Call(req, resp)
 
 	return resp.Result, err
 }

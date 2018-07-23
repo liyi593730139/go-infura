@@ -1,4 +1,4 @@
-package infura
+package eth
 
 import (
 	"testing"

@@ -1,72 +1,33 @@
 package infura
 
 import (
-	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
-	"os"
-)
-
-const (
-	baseURL = ""
+	"net/url"
 )
 
 type Client struct {
 	*http.Client
-	config    Config
-	userAgent string
 }
 
-type Request struct {
-	Endpoint       string   `json:"method"`
-	HTTPMethod     string   `json:"omit"`
-	Params         []string `json:"params"`
-	JSONRPCVersion string   `json:"jsonrpc"`
-	ID             uint8    `json:"id"`
-}
-
-func NewClient(nw Network) Client {
-	return Client{
+func NewClient() *Client {
+	return &Client{
 		http.DefaultClient,
-		NewConfig(os.Getenv("INFURA_API_KEY"), nw),
-		"go-infure-json-rpc/0.1",
 	}
 }
 
-func (c Client) NewRequest(httpMethod, endpoint string, params []string) (*http.Request, error) {
-	req := Request{
-		JSONRPCVersion: "2.0",
-		ID:             1,
-		Endpoint:       endpoint,
-		Params:         params,
-	}
-
-	var buf io.ReadWriter
-	buf = new(bytes.Buffer)
-	err := json.NewEncoder(buf).Encode(req)
-	if err != nil {
-		return nil, err
-	}
-
-	httpReq, err := http.NewRequest(httpMethod, c.config.Network.URL()+c.config.APIKey, buf)
-	if err != nil {
-		return nil, err
-	}
-
-	httpReq.Header.Add("Accept", "application/json")
-	if c.userAgent != "" {
-		httpReq.Header.Add("User-Agent", c.userAgent)
-	}
-
-	return httpReq, err
-}
-
-func (c Client) do(req *http.Request, v interface{}) (*http.Response, error) {
+func (c *Client) Call(req *http.Request, v interface{}) (*http.Response, error) {
 	resp, err := c.Do(req)
 	if err != nil {
 		return nil, err
 	}
+
+	// response, err := ioutil.ReadAll(resp.Body)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// fmt.Println(string(response))
 
 	if v != nil {
 		if w, ok := v.(io.Writer); ok {
@@ -82,8 +43,15 @@ func (c Client) do(req *http.Request, v interface{}) (*http.Response, error) {
 	return resp, err
 }
 
-type Response struct {
-	JSONRPCVersion string `json:"jsonrpc"`
-	ID             uint8  `json:"id"`
-	Result         string `json:"result"`
+func BuildURLString(u *url.URL, params map[string]string) string {
+	u.RawQuery = encodeParams(u, params)
+	return u.String()
+}
+
+func encodeParams(u *url.URL, params map[string]string) string {
+	q := u.Query()
+	for k, v := range params {
+		q.Add(k, v)
+	}
+	return q.Encode()
 }

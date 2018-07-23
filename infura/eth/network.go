@@ -1,4 +1,4 @@
-package infura
+package eth
 
 type Network uint8
 
